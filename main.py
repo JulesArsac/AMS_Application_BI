@@ -19,7 +19,7 @@ def generate_preference_table(attributes, min_max, weights):
         for j in range(len(attributes[i])):
             for k in range(len(attributes)):
                 if k == i:
-                    pref_table[i][k] = None
+                    pref_table[i][k] = 0
                     continue
                 if (attributes[i][j]*min_max[j] > attributes[k][j]*min_max[j]):
                     pref_table[i][k] += weights[j]
