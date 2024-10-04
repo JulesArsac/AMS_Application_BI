@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def generate_preference_table(attributes, min_max, weights):
+def concordance(attributes, min_max, weights):
     """
     Generates the preference table for the problem.
 
@@ -21,17 +21,42 @@ def generate_preference_table(attributes, min_max, weights):
                 if k == i:
                     pref_table[i][k] = 0
                     continue
-                if (attributes[i][j]*min_max[j] > attributes[k][j]*min_max[j]):
+                if (attributes[i][j]*min_max[j] >= attributes[k][j]*min_max[j]):
                     pref_table[i][k] += weights[j]
     return pref_table
 
+def no_discordance(attributes, min_max, veto):
+    no_discordance_table = np.ones((len(attributes),len(attributes)))
+    for i in range(len(attributes)):
+        for j in range(len(attributes[i])):
+            for k in range(len(attributes)):
+                if k == i:
+                    no_discordance_table[i][k] = None
+                    continue
+                if (attributes[i][j]*min_max[j] >= attributes[k][j]*min_max[j]):
+                    if attributes[i][j]*min_max[j] - attributes[k][j]*min_max[j] > veto[j]:
+                        no_discordance_table[k][i] = 0
+    return no_discordance_table
+
+
 classes = ["A","B","C"]
-attributes = [[15,16,16],
-              [16,8,7],
-              [13,18,12]]
-min_max = [1,1,1]
-weights = [0.6,0.3,0.1]
+attributes = [[4500,7,7,8],
+              [4000,7,3,8],
+              [4000,5,7,8],
+              [3500,5,7,5],
+              [3500,5,7,8],
+              [3500,3,3,8],
+              [2500,3,7,5],]
+min_max = [-1,1,1,1]
+weights = [0.5,0.3,0.1,0.1]
 
-pref_table = generate_preference_table(attributes,min_max,weights)
+pref_table = concordance(attributes,min_max,weights)
 
+print("Concordance : ")
 print(pref_table)
+
+veto = [750,3,3.5,3.5]
+no_discordance_table = no_discordance(attributes,min_max,veto)
+
+print("Non Discordance")
+print(no_discordance_table)
