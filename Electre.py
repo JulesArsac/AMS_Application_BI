@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
 
 def concordance(attributes, min_max, weights):
     """
@@ -31,12 +33,21 @@ def no_discordance(attributes, min_max, veto):
         for j in range(len(attributes[i])):
             for k in range(len(attributes)):
                 if k == i:
-                    no_discordance_table[i][k] = None
+                    no_discordance_table[i][k] = 0
                     continue
                 if (attributes[i][j]*min_max[j] >= attributes[k][j]*min_max[j]):
                     if attributes[i][j]*min_max[j] - attributes[k][j]*min_max[j] > veto[j]:
                         no_discordance_table[k][i] = 0
     return no_discordance_table
+
+def electre(concordance_table: np.ndarray, non_discordance_table,threshold: np.ndarray):
+    links = np.empty((len(concordance_table),0))
+    links = links.tolist()
+    for i in range(len(concordance_table)):
+        for j in range(len(concordance_table[i])):
+            if concordance_table[i][j] >= threshold and non_discordance_table[i][j] == 1.0:
+                links[i].append(j)
+    return links
 
 
 classes = ["A","B","C"]
@@ -56,7 +67,12 @@ print("Concordance : ")
 print(pref_table)
 
 veto = [750,3,3.5,3.5]
-no_discordance_table = no_discordance(attributes,min_max,veto)
+non_discordance_table = no_discordance(attributes,min_max,veto)
 
-print("Non Discordance")
-print(no_discordance_table)
+print("Non Discordance : ")
+print(non_discordance_table)
+
+print("Electre : ")
+links = electre(pref_table,non_discordance_table,0.7)
+for i,val in enumerate(links):
+    print(f"{i} : {val}")
