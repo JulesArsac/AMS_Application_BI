@@ -69,6 +69,14 @@ def get_core(links):
             core.append(i)
     return core
 
+def print_dominance(links):
+    for i in range(len(links)):
+        temp = []
+        for j in range(len(links)):
+            if links[i][j] == 1:
+                temp.append(j)
+        print(f"{i} : {temp}")
+
 def directed_graph(table):
     graph = nx.DiGraph()
     for i in range(len(table)):
@@ -106,7 +114,7 @@ print(non_discordance_table)
 
 print("Electre : ")
 links = electre(pref_table,non_discordance_table,0.7)
-print(links)
+print_dominance(links)
 
 core = get_core(links)
 print(f"Core : {core}")
