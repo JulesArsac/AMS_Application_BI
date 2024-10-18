@@ -3,9 +3,9 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-def concordance(attributes, min_max, weights):
+def get_concordance(attributes, min_max, weights):
     """
-    Generates the preference table for the problem.
+    Generates the concordance table for the problem.
 
     Args:
         attributes: The attributes on which the data is being valued
@@ -13,42 +13,87 @@ def concordance(attributes, min_max, weights):
         weights: Weight of each attribute
 
     Returns:
-        pref_table : The preference table of the given values.
+        concordance_table : The concordance table of the given values.
     """
 
-    pref_table = np.zeros((len(attributes),len(attributes)))
-    for i in range(len(attributes)):
-        for j in range(len(attributes[i])):
-            for k in range(len(attributes)):
-                if k == i:
-                    pref_table[i][k] = 0
-                    continue
-                if (attributes[i][j]*min_max[j] >= attributes[k][j]*min_max[j]):
-                    pref_table[i][k] += weights[j]
-    return pref_table
+    #Initialization of the table at the right size and fill it with zeros
+    concordance_table = np.zeros((len(attributes),len(attributes)))
 
-def no_discordance(attributes, min_max, veto):
-    no_discordance_table = np.ones((len(attributes),len(attributes)))
+    #Loop to iterate through each entity
     for i in range(len(attributes)):
+        #Loop to iterate through the different attributes
         for j in range(len(attributes[i])):
+            #Loop to iterate through the other entities to compare entities
             for k in range(len(attributes)):
+                #If we're comparing the same entity then we skip the analysis and set its concordance at 0
                 if k == i:
-                    no_discordance_table[i][k] = 0
+                    concordance_table[i][k] = 0
                     continue
+                #If the entity is the better one for this attribute then we give it the corresponding weight
                 if (attributes[i][j]*min_max[j] >= attributes[k][j]*min_max[j]):
+                    concordance_table[i][k] += weights[j]
+    return concordance_table
+
+def get_non_discordance(attributes, min_max, veto):
+    """
+    Generates the non discordance table for the problem.
+
+    Args:
+        attributes: The attributes on which the data is being valued
+        min_max: Array of either 1 for max or -1 for min
+        veto: veto threshold for each attribute
+
+    Returns:
+        non_discordance_table : The concordance table of the given values.
+    """
+
+    #Initialization of the non discordance table at the right shape and fill it with ones
+    non_discordance_table = np.ones((len(attributes),len(attributes)))
+
+    #Loop to iterate through each entity
+    for i in range(len(attributes)):
+        #Loop to iterate through the different attributes
+        for j in range(len(attributes[i])):
+            #Loop to iterate through the other entities to compare entities
+            for k in range(len(attributes)):
+                #If we're comparing the same entity then we skip the analysis and set its non discordance to 0
+                if k == i:
+                    non_discordance_table[i][k] = 0
+                    continue
+                #If the entity is the better one for this attribute then we check if it will be vetoed
+                if (attributes[i][j]*min_max[j] >= attributes[k][j]*min_max[j]):
+                    #If the difference between the two attributes is over the veto then we veto it by setting its value to 0 in the table
                     if attributes[i][j]*min_max[j] - attributes[k][j]*min_max[j] > veto[j]:
-                        no_discordance_table[k][i] = 0
-    return no_discordance_table
+                        non_discordance_table[k][i] = 0
+    return non_discordance_table
 
-def electre(concordance_table: np.ndarray, non_discordance_table,threshold: np.ndarray):
+def apply_electre(concordance_table: np.ndarray, non_discordance_table : np.ndarray,threshold):
+    """
+    Generates the graph links table for the problem.
+
+    Args:
+        concordance_table (np.ndarray) : The concordance table for the problem
+        non_discordance_table (np.ndarray) : The non dicordance table for the problem
+        threshold : Threshold to surpass to qualify (value between 0 and 1)
+
+    Returns:
+        links : The graph links table for the problem.
+    """
+    #Initialization of the links table with all its values set to 0
     links = np.zeros(concordance_table.shape)
+
+    #Iterate through the entities
     for i in range(len(concordance_table)):
+        #Iterate through its scores compared to the other entities 
         for j in range(len(concordance_table[i])):
+            #If it has a higher value than the threshold and there isn't a problem with the non discordance then we confirm a link
             if concordance_table[i][j] >= threshold and non_discordance_table[i][j] == 1.0:
                 links[i][j] = 1
-    #Check for loops
+    #We reiterate through our newly created links table to check for cycles in the graph
     for i in range(len(links)):
+        #we check in an upside down L shape for links
         for j in range(i):
+            #If there is a cyclic link between two nodes then we will fix the cyclic link
             if i!=j and links[i][j] == 1 and links[j][i] == 1:
                 if concordance_table[i][j] > concordance_table[j][i]:
                     links[j][i] = 0
@@ -60,16 +105,39 @@ def electre(concordance_table: np.ndarray, non_discordance_table,threshold: np.n
     return links
 
 def get_core(links):
+    """
+    Gets the core that can be extracted from the graph
+
+    Args:
+        links (np.ndarray) : The graph links table to process
+
+    Returns:
+        core : List of all attributes in the core
+    """
+    #Initialization of the core
     core = []
+
+    #We iterate through the graph links table
     for i in range(len(links)):
-        count = 0
+        #We entity will be part of the core
+        isCore = True
         for j in range(len(links)):
-            count += links[j][i]
-        if count == 0:
+            #If a value in the entity's column is equal to 1 then it won't be int the core so we stop looking
+            if links[j][i] == 1.0:
+                isCore = False
+                break
+        #If the value is a part of the core, then we add it to the list of core values
+        if isCore:
             core.append(i)
     return core
 
 def print_dominance(links):
+    """
+    Prints the dominated entities according to the electre algorithm from its graph links table in an easily readable way
+
+    Args:
+        links (np.ndarray) : The graph links table to process
+    """
     for i in range(len(links)):
         temp = []
         for j in range(len(links)):
@@ -77,20 +145,24 @@ def print_dominance(links):
                 temp.append(j)
         print(f"{i} : {temp}")
 
-def directed_graph(table):
+def make_directed_graph(links):
+    """
+    Creates a directed graph to display from the graph links table
+
+    Args:
+        links (np.ndarray) : The graph links table to process
+    """
     graph = nx.DiGraph()
-    for i in range(len(table)):
+    for i in range(len(links)):
         graph.add_node(i)
-    for i in range(len(table)):
-        for j in range(len(table[i])):
-            if table[i][j] == 1:
+    for i in range(len(links)):
+        for j in range(len(links[i])):
+            if links[i][j] == 1:
                 graph.add_edge(i,j)
 
     nx.draw(graph, with_labels = True)
     plt.show()
 
-
-classes = ["A","B","C"]
 attributes = [[4500,7,7,8],
               [4000,7,3,8],
               [4000,5,7,8],
@@ -101,19 +173,19 @@ attributes = [[4500,7,7,8],
 min_max = [-1,1,1,1]
 weights = [0.5,0.3,0.1,0.1]
 
-pref_table = concordance(attributes,min_max,weights)
+concordance_table = get_concordance(attributes,min_max,weights)
 
 print("Concordance : ")
-print(pref_table)
+print(concordance_table)
 
 veto = [750,3,3.5,3.5]
-non_discordance_table = no_discordance(attributes,min_max,veto)
+non_discordance_table = get_non_discordance(attributes,min_max,veto)
 
 print("Non Discordance : ")
 print(non_discordance_table)
 
 print("Electre : ")
-links = electre(pref_table,non_discordance_table,0.7)
+links = apply_electre(concordance_table,non_discordance_table,0.7)
 print_dominance(links)
 
 core = get_core(links)
