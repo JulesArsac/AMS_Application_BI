@@ -41,21 +41,42 @@ def no_discordance(attributes, min_max, veto):
     return no_discordance_table
 
 def electre(concordance_table: np.ndarray, non_discordance_table,threshold: np.ndarray):
-    links = np.empty((len(concordance_table),0))
-    links = links.tolist()
+    links = np.zeros(concordance_table.shape)
     for i in range(len(concordance_table)):
         for j in range(len(concordance_table[i])):
             if concordance_table[i][j] >= threshold and non_discordance_table[i][j] == 1.0:
-                links[i].append(j)
+                links[i][j] = 1
+    #Check for loops
+    for i in range(len(links)):
+        for j in range(i):
+            if i!=j and links[i][j] == 1 and links[j][i] == 1:
+                if concordance_table[i][j] > concordance_table[j][i]:
+                    links[j][i] = 0
+                elif concordance_table[i][j] < concordance_table[j][i]:
+                    links[i][j] = 0
+                elif concordance_table[i][j] == concordance_table[j][i]:
+                    links[i][j] = 0
+                    links[j][i] = 0
     return links
+
+def get_core(links):
+    core = []
+    for i in range(len(links)):
+        count = 0
+        for j in range(len(links)):
+            count += links[j][i]
+        if count == 0:
+            core.append(i)
+    return core
 
 def directed_graph(table):
     graph = nx.DiGraph()
     for i in range(len(table)):
         graph.add_node(i)
     for i in range(len(table)):
-        for j in table[i]:
-            graph.add_edge(i,j)
+        for j in range(len(table[i])):
+            if table[i][j] == 1:
+                graph.add_edge(i,j)
 
     nx.draw(graph, with_labels = True)
     plt.show()
@@ -85,5 +106,7 @@ print(non_discordance_table)
 
 print("Electre : ")
 links = electre(pref_table,non_discordance_table,0.7)
-for i,val in enumerate(links):
-    print(f"{i} : {val}")
+print(links)
+
+core = get_core(links)
+print(f"Core : {core}")
