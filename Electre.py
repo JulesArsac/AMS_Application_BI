@@ -49,6 +49,17 @@ def electre(concordance_table: np.ndarray, non_discordance_table,threshold: np.n
                 links[i].append(j)
     return links
 
+def directed_graph(table):
+    graph = nx.DiGraph()
+    for i in range(len(table)):
+        graph.add_node(i)
+    for i in range(len(table)):
+        for j in table[i]:
+            graph.add_edge(i,j)
+
+    nx.draw(graph, with_labels = True)
+    plt.show()
+
 
 classes = ["A","B","C"]
 attributes = [[4500,7,7,8],
