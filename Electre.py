@@ -163,22 +163,17 @@ def make_directed_graph(links):
     nx.draw(graph, with_labels = True)
     plt.show()
 
-attributes = [[4500,7,7,8],
-              [4000,7,3,8],
-              [4000,5,7,8],
-              [3500,5,7,5],
-              [3500,5,7,8],
-              [3500,3,3,8],
-              [2500,3,7,5],]
-min_max = [-1,1,1,1]
-weights = [0.5,0.3,0.1,0.1]
+#Prix, vitesse_max, conso_moyenne, distance_frein, confort, volume coffre, accèlération
+attributes = pd.read_csv("data/donnees.csv").values
+min_max = [-1,1,-1,-1,1,1,1]
+weights = [0.25,0.1,0.25,0.1,0.1,0.05,0.15]
+veto = [5000,5,3.5,5,3,50,3]
 
 concordance_table = get_concordance(attributes,min_max,weights)
 
 print("Concordance : ")
 print(concordance_table)
 
-veto = [750,3,3.5,3.5]
 non_discordance_table = get_non_discordance(attributes,min_max,veto)
 
 print("Non Discordance : ")
