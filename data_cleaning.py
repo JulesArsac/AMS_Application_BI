@@ -20,6 +20,12 @@ data["Married"] = data["Married"].map({
     "no": 0
 })
 
+data["Gender"] = data["Gender"].map({
+    "Male": 0,
+    "Female": 1,
+    "Other": 2
+})
+
 # Update the "Age Group" column
 dico_age_group = {"under 18": 0, "18-25": 1, "25-45": 2, "45-60": 3, "60 and above": 4}
 data["Age Group"] = data["Age Group"].map(dico_age_group)
