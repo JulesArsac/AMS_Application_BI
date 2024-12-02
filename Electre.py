@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def get_concordance(attributes, min_max, weights):
     """
-    Generates the concordance table for the problem.
+    Generates the concordance table for the Electre Iv problem.
 
     Args:
         attributes: The attributes on which the data is being valued
@@ -32,6 +32,40 @@ def get_concordance(attributes, min_max, weights):
                 #If the entity is the better one for this attribute then we give it the corresponding weight
                 if (attributes[i][j]*min_max[j] >= attributes[k][j]*min_max[j]):
                     concordance_table[i][k] += weights[j]
+    return concordance_table
+
+def get_concordance_threshold(attributes, min_max, weights,thresholds):
+    """
+    Generates the concordance table for the Electre Is problem.
+
+    Args:
+        attributes: The attributes on which the data is being valued
+        min_max: Array of either 1 for max or -1 for min
+        weights: Weight of each attribute
+        thresholds: Thresholds to be used in Electre Is
+
+    Returns:
+        concordance_table : The concordance table of the given values.
+    """
+
+    #Initialization of the table at the right size and fill it with zeros
+    concordance_table = np.zeros((len(attributes),len(attributes)))
+
+    #Loop to iterate through each entity
+    for i in range(len(attributes)):
+        #Loop to iterate through the different attributes
+        for j in range(len(attributes[i])):
+            #Loop to iterate through the other entities to compare entities
+            for k in range(len(attributes)):
+                #If we're comparing the same entity then we skip the analysis and set its concordance at 0
+                if k == i:
+                    concordance_table[i][k] = 0
+                    continue
+                #If the entity is the better one for this attribute then we give it the corresponding weight
+                if (attributes[i][j]*min_max[j] >= attributes[k][j]*min_max[j]):
+                    concordance_table[i][k] += weights[j]
+                elif np.abs(attributes[k][j] - attributes[i][j]) < thresholds[j]:
+                    concordance_table[i][k] += weights[j]*(1-(np.abs(attributes[k][j] - attributes[i][j]))/thresholds[j])
     return concordance_table
 
 def get_non_discordance(attributes, min_max, veto):
@@ -163,25 +197,44 @@ def make_directed_graph(links):
     nx.draw(graph, with_labels = True)
     plt.show()
 
+def electre_v(attributes,min_max,weights,veto):
+    concordance_table = get_concordance(attributes,min_max,weights)
+    print("Concordance : ")
+    print(concordance_table)
+
+    non_discordance_table = get_non_discordance(attributes,min_max,veto)
+    print("Non Discordance : ")
+    print(non_discordance_table)
+
+    print("ElectreIv : ")
+    links = apply_electre(concordance_table,non_discordance_table,0.7)
+    print_dominance(links)
+
+    core = get_core(links)
+    print(f"Core : {core}")
+
+def electre_s(attributes,min_max,weights,veto,thresholds):
+    concordance_table = get_concordance_threshold(attributes,min_max,weights,thresholds)
+    print("Concordance : ")
+    print(concordance_table)
+
+    non_discordance_table = get_non_discordance(attributes,min_max,veto)
+    print("Non Discordance : ")
+    print(non_discordance_table)
+
+    print("ElectreIs : ")
+    links = apply_electre(concordance_table,non_discordance_table,0.7)
+    print_dominance(links)
+
+    core = get_core(links)
+    print(f"Core : {core}")
+
 #Prix, vitesse_max, conso_moyenne, distance_frein, confort, volume coffre, accèlération
-attributes = pd.read_csv("data/donnees.csv").values
 min_max = [-1,1,-1,-1,1,1,1]
 weights = [0.25,0.1,0.25,0.1,0.1,0.05,0.15]
 veto = [5000,5,3.5,5,3,50,3]
-
-concordance_table = get_concordance(attributes,min_max,weights)
-
-print("Concordance : ")
-print(concordance_table)
-
-non_discordance_table = get_non_discordance(attributes,min_max,veto)
-
-print("Non Discordance : ")
-print(non_discordance_table)
-
-print("Electre : ")
-links = apply_electre(concordance_table,non_discordance_table,0.7)
-print_dominance(links)
-
-core = get_core(links)
-print(f"Core : {core}")
+thresholds = [2000,3,2,3,2,20,2]
+attributes = pd.read_csv("data/donnees.csv").values
+electre_v(attributes,min_max,weights,veto)
+attributes = pd.read_csv("data/donnees.csv").values
+electre_s(attributes,min_max,weights,veto,thresholds)
