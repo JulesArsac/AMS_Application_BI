@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
-import mplfinance as mpf
 
 # Load the data
 data = pd.read_csv("dataset/E-commerce-data.csv")
