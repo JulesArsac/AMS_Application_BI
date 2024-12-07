@@ -6,6 +6,18 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 
+# Function to prepare the data (separate X and y for train/test)
+"""
+    Generates the preference table for the problem.
+
+    Args:
+        attributes: The attributes on which the data is valued.
+        min_max: Array containing either 1 for a maximization criterion or -1 for a minimization criterion.
+        weights: Weight of each attribute.
+
+    Returns:
+        pref_table: The preference table of the given values.
+"""
 def prepare_data(train, test, target_column):
     X_train = train.drop(columns=[target_column])
     y_train = train[target_column]
@@ -13,49 +25,55 @@ def prepare_data(train, test, target_column):
     y_test = test[target_column]
     return X_train, y_train, X_test, y_test
 
-n_neighbors = 232 # sqrt of n
+# Define parameters and columns to process
+# (sqrt(n))
+n_neighbors = 230
 
-# Chargement et préparation des données
-data = pd.read_csv("dataset/E-commerce-data-cleaned.csv")
+# Target column
 target_column = "Married"
+
+# Columns to drop
 columns_to_drop = ["Purchase Date", "Product Category", "Purchase Method", "Location"]
 
+# Load and clean the data
+data = pd.read_csv("dataset/E-commerce-data-cleaned.csv")
 data = data.drop(columns=columns_to_drop)
-target = data[target_column]
-data = data.drop(columns=[target_column])
 
-only_num = data.drop(columns=["Gender", "Age Group", "Discount Availed"])
+# Split the data into numerical and categorical columns
+numerical_cols = ["Gross Amount", "Net Amount"]
+categorical_cols = ["Gender", "Age Group", "Discount Availed"]
+
+# Standardize the numerical columns
 scaler = StandardScaler()
-only_num_scaled = scaler.fit_transform(only_num)
+numerical_data = pd.DataFrame(scaler.fit_transform(data[numerical_cols]), columns=numerical_cols)
 
-only_cat = data.drop(columns=["Gross Amount", "Net Amount"])
+# Encode the categorical columns
 encoder = OneHotEncoder()
-encoder.fit(only_cat)
-only_cat_encoded = encoder.transform(only_cat).toarray()
+categorical_data = pd.DataFrame(
+    encoder.fit_transform(data[categorical_cols]).toarray(),
+    columns=encoder.get_feature_names_out(categorical_cols)
+)
 
-X = pd.concat([pd.DataFrame(only_num_scaled), pd.DataFrame(only_cat_encoded), pd.DataFrame(target)], axis=1)
+# Concatenate the transformed columns
+X = pd.concat([numerical_data, categorical_data], axis=1)
+X[target_column] = data[target_column]
 
-train, test = train_test_split(X, test_size=0.2, random_state=69)
+# Split the data into training and testing sets
+train, test = train_test_split(X, test_size=0.2, random_state=1)
 X_train, y_train, X_test, y_test = prepare_data(train, test, target_column)
 
-# Initialisation des modèles
-rdforest = RandomForestClassifier(random_state=69)
-svc = SVC(random_state=69)
-gmb = GaussianNB()
-knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+# Initialize the models
+models = {
+    "Random Forest": RandomForestClassifier(random_state=69),
+    "SVC": SVC(random_state=69),
+    "Gaussian Naive Bayes": GaussianNB(),
+    "K-Nearest Neighbors": KNeighborsClassifier(n_neighbors=n_neighbors),
+}
 
-# Entraînement des modèles
-print("Training Random Forest")
-rdforest.fit(X_train, y_train)
-print("Training SVC")
-svc.fit(X_train, y_train)
-print("Training Gaussian Naive Bayes")
-gmb.fit(X_train, y_train)
-print("Training K-Nearest Neighbors")
-knn.fit(X_train, y_train)
-
-# Évaluation des modèles
-print(f"Random Forest score: {rdforest.score(X_test, y_test)}")
-print(f"SVC score: {svc.score(X_test, y_test)}")
-print(f"Gaussian Naive Bayes score: {gmb.score(X_test, y_test)}")
-print(f"KNN score: {knn.score(X_test, y_test)}")
+# Train and evaluate the models
+print(f"Predicting '{target_column}' from the transformed data")
+for model_name, model in models.items():
+    print(f"\nTraining {model_name}...")
+    model.fit(X_train, y_train)
+    score = model.score(X_test, y_test)
+    print(f"{model_name} Accuracy: {score:.2f}")
