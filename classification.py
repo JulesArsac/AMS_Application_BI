@@ -28,13 +28,13 @@ def prepare_data(train, test, target_column):
 
 # Define parameters and columns to process
 # (sqrt(n))
-n_neighbors = 230
+n_neighbors = 5
 
 # Target column
-target_column = "Discount Availed"
+target_column = "Gender"
 
 # Columns to drop
-columns_to_drop = ["Purchase Date", "Purchase Method", "Location"]
+columns_to_drop = []
 
 # Load and clean the data
 data = pd.read_csv("dataset/E-commerce-data-cleaned.csv")
@@ -42,7 +42,7 @@ data = data.drop(columns=columns_to_drop)
 
 # Split the data into numerical and categorical columns
 numerical_cols = []
-categorical_cols = ["Married", "Age Group", "Product Category"]
+categorical_cols = ["Product Category"]
 
 only_numerical = False
 only_categorical = False
@@ -64,7 +64,7 @@ if not(categorical_cols == []):
     )
 else:
     categorical_data = []
-    only_categorical = True
+    only_numerical = True
 
 if only_numerical:
     X = numerical_data
@@ -83,8 +83,8 @@ X_train, y_train, X_test, y_test = prepare_data(train, test, target_column)
 # Initialize the models
 models = {
     "Dummy": DummyClassifier(strategy="most_frequent"),
-    "Random Forest": RandomForestClassifier(random_state=69),
-    "SVC": SVC(random_state=69),
+    "Random Forest": RandomForestClassifier(random_state=1),
+    "SVC": SVC(random_state=1),
     "Gaussian Naive Bayes": GaussianNB(),
     "K-Nearest Neighbors": KNeighborsClassifier(n_neighbors=n_neighbors),
 }
