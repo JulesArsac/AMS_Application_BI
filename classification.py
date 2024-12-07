@@ -87,7 +87,6 @@ models = {
     "SVC": SVC(random_state=69),
     "Gaussian Naive Bayes": GaussianNB(),
     "K-Nearest Neighbors": KNeighborsClassifier(n_neighbors=n_neighbors),
-    "Dummy": DummyClassifier(strategy='most_frequent')
 }
 
 # Train and evaluate the models
