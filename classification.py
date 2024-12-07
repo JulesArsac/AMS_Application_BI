@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
@@ -64,6 +65,7 @@ X_train, y_train, X_test, y_test = prepare_data(train, test, target_column)
 
 # Initialize the models
 models = {
+    "Dummy": DummyClassifier(strategy="most_frequent"),
     "Random Forest": RandomForestClassifier(random_state=69),
     "SVC": SVC(random_state=69),
     "Gaussian Naive Bayes": GaussianNB(),
