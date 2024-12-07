@@ -82,6 +82,7 @@ X_train, y_train, X_test, y_test = prepare_data(train, test, target_column)
 
 # Initialize the models
 models = {
+    "Dummy": DummyClassifier(strategy="most_frequent"),
     "Random Forest": RandomForestClassifier(random_state=69),
     "SVC": SVC(random_state=69),
     "Gaussian Naive Bayes": GaussianNB(),
