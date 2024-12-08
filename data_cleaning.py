@@ -30,6 +30,10 @@ data["Gender"] = data["Gender"].map({
 dico_age_group = {"under 18": 0, "18-25": 1, "25-45": 2, "45-60": 3, "60 and above": 4}
 data["Age Group"] = data["Age Group"].map(dico_age_group)
 
+# Update the "Purchase Date" column
+data["Purchase Date"] = pd.to_datetime(data["Purchase Date"], format="%d/%m/%Y %H:%M:%S")
+data["Purchase Date"] = data["Purchase Date"].dt.dayofweek
+
 # Update the "Gross Amount and Net Amount" columns
 print("Updating Gross Amount and Net Amount columns")
 for i in range(len(data)):

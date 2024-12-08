@@ -54,8 +54,15 @@ except ValueError:
     n_neighbors = DEFAULT_N_NEIGHBORS
 
 # Split the data into numerical and categorical columns
-numerical_cols = [col for col in columns_to_use if data[col].dtype in ['int64', 'float64']]
-categorical_cols = [col for col in columns_to_use if col not in numerical_cols]
+num_cols_names = ["Gross Amount", "Net Amount"]
+cat_cols_names = ["Gender", "Age Group","Purchase Date", "Product Category", "Discount Availed", "Purchase Method", "Location", "Married"]
+numerical_cols = []
+categorical_cols = []
+for col in columns_to_use:
+    if col in num_cols_names:
+        numerical_cols.append(col)
+    elif col in cat_cols_names:
+        categorical_cols.append(col)
 
 # Process numerical columns
 if numerical_cols:
