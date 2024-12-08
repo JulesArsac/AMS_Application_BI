@@ -8,17 +8,6 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 
 # Function to prepare the data (separate X and y for train/test)
-"""
-    Generates the preference table for the problem.
-
-    Args:
-        attributes: The attributes on which the data is valued.
-        min_max: Array containing either 1 for a maximization criterion or -1 for a minimization criterion.
-        weights: Weight of each attribute.
-
-    Returns:
-        pref_table: The preference table of the given values.
-"""
 def prepare_data(train, test, target_column):
     X_train = train.drop(columns=[target_column])
     y_train = train[target_column]
@@ -26,54 +15,55 @@ def prepare_data(train, test, target_column):
     y_test = test[target_column]
     return X_train, y_train, X_test, y_test
 
-# Define parameters and columns to process
-# (sqrt(n))
-n_neighbors = 5
+# Default number of neighbors for KNN
+DEFAULT_N_NEIGHBORS = 234
 
-# Target column
-target_column = "Gender"
-
-# Columns to drop
-columns_to_drop = []
-
-# Load and clean the data
+# Load the data
 data = pd.read_csv("dataset/E-commerce-data-cleaned.csv")
-data = data.drop(columns=columns_to_drop)
+
+# Ask the user for inputs
+target_column = input("Entrez la colonne cible à prédire : ")
+
+if target_column not in data.columns:
+    raise ValueError(f"La colonne cible '{target_column}' n'existe pas dans le dataset.")
+
+columns_to_use = input("Entrez les colonnes à utiliser pour la prédiction (séparées par des virgules) : ")
+columns_to_use = [col.strip() for col in columns_to_use.split(",")]
+
+for col in columns_to_use:
+    if col not in data.columns:
+        raise ValueError(f"La colonne '{col}' n'existe pas dans le dataset.")
+
+try:
+    n_neighbors = int(input(f"Entrez le nombre de voisins pour KNN (par défaut n = sqrt(nombre de lignes de data) = {DEFAULT_N_NEIGHBORS}): "))
+except ValueError:
+    n_neighbors = DEFAULT_N_NEIGHBORS
 
 # Split the data into numerical and categorical columns
-numerical_cols = []
-categorical_cols = ["Product Category"]
+numerical_cols = [col for col in columns_to_use if data[col].dtype in ['int64', 'float64']]
+categorical_cols = [col for col in columns_to_use if col not in numerical_cols]
 
-only_numerical = False
-only_categorical = False
-
-if not(numerical_cols == []):
-    # Standardize the numerical columns
+# Process numerical columns
+if numerical_cols:
     scaler = StandardScaler()
     numerical_data = pd.DataFrame(scaler.fit_transform(data[numerical_cols]), columns=numerical_cols)
 else:
-    numerical_data = []
-    only_categorical = True
+    numerical_data = pd.DataFrame()
 
-if not(categorical_cols == []):
-    # Encode the categorical columns
+# Process categorical columns
+if categorical_cols:
     encoder = OneHotEncoder()
     categorical_data = pd.DataFrame(
         encoder.fit_transform(data[categorical_cols]).toarray(),
         columns=encoder.get_feature_names_out(categorical_cols)
     )
 else:
-    categorical_data = []
-    only_numerical = True
+    categorical_data = pd.DataFrame()
 
-if only_numerical:
-    X = numerical_data
-elif only_categorical:
-    X = categorical_data
-else:
-    # Concatenate the transformed columns
-    X = pd.concat([numerical_data, categorical_data], axis=1)
+# Concatenate numerical and categorical data
+X = pd.concat([numerical_data, categorical_data], axis=1)
 
+# Add the target column
 X[target_column] = data[target_column]
 
 # Split the data into training and testing sets
@@ -89,10 +79,16 @@ models = {
     "K-Nearest Neighbors": KNeighborsClassifier(n_neighbors=n_neighbors),
 }
 
+# Display correlation matrix for the training set
+correlation = train.corr()
+if target_column in correlation:
+    print("\nMatrice de corrélation avec la colonne cible :")
+    print(correlation[target_column])
+
 # Train and evaluate the models
-print(f"Predicting '{target_column}' from the transformed data")
+print(f"\nPrédiction pour '{target_column}' à partir des colonnes sélectionnées.")
 for model_name, model in models.items():
-    print(f"\nTraining {model_name}...")
+    print(f"\nEntraînement du modèle {model_name}...")
     model.fit(X_train, y_train)
     score = model.score(X_test, y_test)
-    print(f"{model_name} Accuracy: {score:.2f}")
+    print(f"{model_name} - Précision : {score:.2f}")
