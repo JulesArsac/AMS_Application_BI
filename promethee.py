@@ -41,7 +41,7 @@ def generate_concordance_table_threshold(attributes, min_max, weights, threshold
                         concordance_table[i][k] += weights[j]
     return concordance_table
 
-def make_directed_graph(links,labels = None):
+def make_directed_graph(save_path,links,labels = None):
     """
     Creates a directed graph to display from the graph links table
 
@@ -59,7 +59,8 @@ def make_directed_graph(links,labels = None):
                 graph.add_edge(labels[i],labels[j])
 
     nx.draw(graph, with_labels = True, pos=nx.spring_layout(graph, k=0.05, iterations=200),node_size = 6000)
-    plt.show()
+    plt.savefig(save_path)
+    plt.close()
 
 def order_to_graph(order):
     links = np.zeros((len(order),len(order)))
@@ -67,7 +68,7 @@ def order_to_graph(order):
         links[order[i]][order[i+1]] = 1
     return links
 
-def promethee_I(attributes,min_max,weights,labels,thresholds = None):
+def promethee_I(attributes,min_max,weights,labels,save_fig,thresholds = None):
     if thresholds is None:
         concordance_table = generate_concordance_table(attributes,min_max,weights)
     else:
@@ -90,9 +91,9 @@ def promethee_I(attributes,min_max,weights,labels,thresholds = None):
             if links[i][j] >= 1 and links[j][i] >= 1:
                 links[i][j] = 0
                 links[j][i] = 0
-    make_directed_graph(links,labels)
+    make_directed_graph(save_fig,links,labels)
 
-def promethee_II(attributes,min_max,weights,labels,thresholds = None):
+def promethee_II(attributes,min_max,weights,labels,save_fig,thresholds = None):
     if thresholds is None:
         concordance_table = generate_concordance_table(attributes,min_max,weights)
     else:
@@ -108,17 +109,5 @@ def promethee_II(attributes,min_max,weights,labels,thresholds = None):
     sort_index = list(reversed(np.argsort(phi)))
     links = order_to_graph(sort_index)
     print("Choice order : ",[labels[i] for i in sort_index])
-    make_directed_graph(links,labels)
-
-    
-
-
-#Prix, vitesse_max, conso_moyenne, distance_frein, confort, volume coffre, accélération
-min_max = [-1,1,-1,-1,1,1,1]
-weights = [0.25,0.1,0.25,0.1,0.1,0.05,0.15]
-veto = [5000,5,3.5,5,3,50,3]
-thresholds = [2000,3,2,3,2,20,2]
-cars = ["Alfa_156","Audi_A4","Cit_Xantia","Peugeot_406","Saab_TID","Rnlt_Laguna","VW_Passat","BMW_320d","Cit_Xara","Rnlt_Safrane"]
-attributes = pd.read_csv("data/donnees.csv", header=None).values
-promethee_I(attributes,min_max,weights,cars)
+    make_directed_graph(save_fig,links,labels)
 

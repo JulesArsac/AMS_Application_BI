@@ -179,7 +179,7 @@ def print_dominance(links):
                 temp.append(j)
         print(f"{i} : {temp}")
 
-def make_directed_graph(links,labels = None):
+def make_directed_graph(save_path,links,labels = None):
     """
     Creates a directed graph to display from the graph links table
 
@@ -197,9 +197,10 @@ def make_directed_graph(links,labels = None):
                 graph.add_edge(labels[i],labels[j])
 
     nx.draw(graph, with_labels = True, pos=nx.spring_layout(graph, k=0.05, iterations=200),node_size = 6000)
-    plt.show()
+    plt.savefig(save_path)
+    plt.close()
 
-def electre_v(attributes,min_max,weights,veto,labels):
+def electre_v(attributes,min_max,weights,veto,labels,save_fig):
     concordance_table = get_concordance(attributes,min_max,weights)
     print("Concordance : ")
     print(concordance_table)
@@ -211,12 +212,12 @@ def electre_v(attributes,min_max,weights,veto,labels):
     print("ElectreIv : ")
     links = apply_electre(concordance_table,non_discordance_table,0.7)
     print_dominance(links)
-    make_directed_graph(links,labels)
+    make_directed_graph(save_fig,links,labels)
 
     core = get_core(links)
     print(f"Core : {[labels[i] for i in core]}")
 
-def electre_s(attributes,min_max,weights,veto,thresholds,labels):
+def electre_s(attributes,min_max,weights,veto,thresholds,labels,save_fig):
     concordance_table = get_concordance_threshold(attributes,min_max,weights,thresholds)
     print("Concordance : ")
     print(concordance_table)
@@ -228,18 +229,8 @@ def electre_s(attributes,min_max,weights,veto,thresholds,labels):
     print("ElectreIs : ")
     links = apply_electre(concordance_table,non_discordance_table,0.7)
     print_dominance(links)
-    make_directed_graph(links,labels)
+    make_directed_graph(save_fig,links,labels)
 
     core = get_core(links)
     print(f"Core : {[labels[i] for i in core]}")
 
-#Prix, vitesse_max, conso_moyenne, distance_frein, confort, volume coffre, accèlération
-min_max = [-1,1,-1,-1,1,1,1]
-weights = [0.25,0.1,0.25,0.1,0.1,0.05,0.15]
-veto = [5000,5,3.5,5,3,50,3]
-thresholds = [2000,3,2,3,2,20,2]
-cars = ["Alfa_156","Audi_A4","Cit_Xantia","Peugeot_406","Saab_TID","Rnlt_Laguna","VW_Passat","BMW_320d","Cit_Xara","Rnlt_Safrane"]
-attributes = pd.read_csv("data/donnees.csv", header=None).values
-electre_v(attributes,min_max,weights,veto,cars)
-attributes = pd.read_csv("data/donnees.csv", header=None).values
-electre_s(attributes,min_max,weights,veto,thresholds,cars)
