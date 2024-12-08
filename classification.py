@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.svm import SVC
@@ -15,8 +15,22 @@ def prepare_data(train, test, target_column):
     y_test = test[target_column]
     return X_train, y_train, X_test, y_test
 
+
+def accuracy_score(lst_classif, lst_classif_names, X, y):
+    for clf, name_clf in zip(lst_classif, lst_classif_names):
+        skf = StratifiedKFold(n_splits=5, shuffle=True)
+        scores = cross_val_score(clf, X, y, cv=skf)
+        print("Accuracy of " + name_clf + " classifier on cross-validation: %0.2f (+/- %0.2f)" % (
+        scores.mean(), scores.std() * 2))
+
+
+def check_user_input(input_str):
+    if input_str.lower() not in ["y", "n"]:
+        raise ValueError("Veuillez entrer 'y' ou 'n'.")
+    return input_str.lower() == "y"
+
 # Default number of neighbors for KNN
-DEFAULT_N_NEIGHBORS = 234
+DEFAULT_N_NEIGHBORS = 7
 
 # Load the data
 data = pd.read_csv("dataset/E-commerce-data-cleaned.csv")
@@ -35,7 +49,7 @@ for col in columns_to_use:
         raise ValueError(f"La colonne '{col}' n'existe pas dans le dataset.")
 
 try:
-    n_neighbors = int(input(f"Entrez le nombre de voisins pour KNN (par défaut n = sqrt(nombre de lignes de data) = {DEFAULT_N_NEIGHBORS}): "))
+    n_neighbors = int(input(f"Entrez le nombre de voisins pour KNN (par défaut n = {DEFAULT_N_NEIGHBORS}): "))
 except ValueError:
     n_neighbors = DEFAULT_N_NEIGHBORS
 
@@ -85,10 +99,22 @@ if target_column in correlation:
     print("\nMatrice de corrélation avec la colonne cible :")
     print(correlation[target_column])
 
-# Train and evaluate the models
-print(f"\nPrédiction pour '{target_column}' à partir des colonnes sélectionnées.")
-for model_name, model in models.items():
-    print(f"\nEntraînement du modèle {model_name}...")
-    model.fit(X_train, y_train)
-    score = model.score(X_test, y_test)
-    print(f"{model_name} - Précision : {score:.2f}")
+
+response = input("Voulez-vous afficher l'accuracy ? (y/n) : ")
+
+if check_user_input(response):
+    # Train and evaluate the models
+    print(f"\nPrédiction pour '{target_column}' à partir des colonnes sélectionnées.")
+    for model_name, model in models.items():
+        print(f"\nEntraînement du modèle {model_name}...")
+        model.fit(X_train, y_train)
+        score = model.score(X_test, y_test)
+        print(f"{model_name} - Précision : {score:.2f}")
+
+response = input("Voulez-vous afficher l'accuracy en cross-validation ? (y/n) : ")
+
+if check_user_input(response):
+    target = X[target_column]
+    X = X.drop(columns=[target_column])
+    for model_name, model in models.items():
+        accuracy_score([model], [model_name], X, target)
