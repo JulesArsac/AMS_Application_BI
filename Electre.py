@@ -201,12 +201,12 @@ def make_directed_graph(links,labels = None):
 
 def electre_v(attributes,min_max,weights,veto,labels):
     concordance_table = get_concordance(attributes,min_max,weights)
-    #print("Concordance : ")
-    #print(concordance_table)
+    print("Concordance : ")
+    print(concordance_table)
 
     non_discordance_table = get_non_discordance(attributes,min_max,veto)
-    #print("Non Discordance : ")
-    #print(non_discordance_table)
+    print("Non Discordance : ")
+    print(non_discordance_table)
 
     print("ElectreIv : ")
     links = apply_electre(concordance_table,non_discordance_table,0.7)
@@ -218,12 +218,12 @@ def electre_v(attributes,min_max,weights,veto,labels):
 
 def electre_s(attributes,min_max,weights,veto,thresholds,labels):
     concordance_table = get_concordance_threshold(attributes,min_max,weights,thresholds)
-    #print("Concordance : ")
-    #print(concordance_table)
+    print("Concordance : ")
+    print(concordance_table)
 
     non_discordance_table = get_non_discordance(attributes,min_max,veto)
-    #print("Non Discordance : ")
-    #print(non_discordance_table)
+    print("Non Discordance : ")
+    print(non_discordance_table)
 
     print("ElectreIs : ")
     links = apply_electre(concordance_table,non_discordance_table,0.7)
@@ -239,7 +239,7 @@ weights = [0.25,0.1,0.25,0.1,0.1,0.05,0.15]
 veto = [5000,5,3.5,5,3,50,3]
 thresholds = [2000,3,2,3,2,20,2]
 cars = ["Alfa_156","Audi_A4","Cit_Xantia","Peugeot_406","Saab_TID","Rnlt_Laguna","VW_Passat","BMW_320d","Cit_Xara","Rnlt_Safrane"]
-attributes = pd.read_csv("data/donnees.csv").values
+attributes = pd.read_csv("data/donnees.csv", header=None).values
 electre_v(attributes,min_max,weights,veto,cars)
-attributes = pd.read_csv("data/donnees.csv").values
+attributes = pd.read_csv("data/donnees.csv", header=None).values
 electre_s(attributes,min_max,weights,veto,thresholds,cars)
