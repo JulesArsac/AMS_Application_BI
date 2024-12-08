@@ -55,17 +55,48 @@ def make_directed_graph(links,labels = None):
         graph.add_node(i)
     for i in range(len(links)):
         for j in range(len(links[i])):
-            if links[i][j] == 1:
+            if links[i][j] >= 1:
                 graph.add_edge(labels[i],labels[j])
 
     nx.draw(graph, with_labels = True, pos=nx.spring_layout(graph, k=0.05, iterations=200),node_size = 6000)
     plt.show()
 
+def order_to_graph(order):
+    links = np.zeros((len(order),len(order)))
+    for i in range(len(order)-1):
+        links[order[i]][order[i+1]] = 1
+    return links
+
+def promethee_I(attributes,min_max,weights,labels,thresholds = None):
+    if thresholds is None:
+        concordance_table = generate_concordance_table(attributes,min_max,weights)
+    else:
+        concordance_table = generate_concordance_table_threshold(attributes,min_max,weights,thresholds)
+    print("Concordance Table : ")
+    print(concordance_table)
+    phi_plus = np.array([sum(i) for i in concordance_table])
+    print("Φ+ : ",phi_plus)
+    phi_minus = np.array([sum(i) for i in concordance_table.T])
+    print("Φ- : ",phi_minus)
+    sort_index_plus = list(reversed(np.argsort(phi_plus)))
+    links_plus = order_to_graph(sort_index_plus)
+    print("Choice order Φ+ : ",[labels[i] for i in sort_index_plus])
+    sort_index_minus = list(np.argsort(phi_minus))
+    links_minus = order_to_graph(sort_index_minus)
+    print("Choice order Φ+ : ",[labels[i] for i in sort_index_minus])
+    links = links_plus+links_minus
+    for i in range(len(links)):
+        for j in range(len(links[i])):
+            if links[i][j] >= 1 and links[j][i] >= 1:
+                links[i][j] = 0
+                links[j][i] = 0
+    make_directed_graph(links,labels)
+
 def promethee_II(attributes,min_max,weights,labels,thresholds = None):
     if thresholds is None:
         concordance_table = generate_concordance_table(attributes,min_max,weights)
     else:
-        concordance_table = generate_concordance_table(attributes,min_max,weights,thresholds)
+        concordance_table = generate_concordance_table_threshold(attributes,min_max,weights,thresholds)
     print("Concordance Table : ")
     print(concordance_table)
     phi_plus = np.array([sum(i) for i in concordance_table])
@@ -75,9 +106,7 @@ def promethee_II(attributes,min_max,weights,labels,thresholds = None):
     phi = phi_plus - phis_minus
     print("Φ  : ",phi)
     sort_index = list(reversed(np.argsort(phi)))
-    links = np.zeros((len(sort_index),len(sort_index)))
-    for i in range(len(sort_index)-1):
-        links[sort_index[i]][sort_index[i+1]] = 1
+    links = order_to_graph(sort_index)
     print("Choice order : ",[labels[i] for i in sort_index])
     make_directed_graph(links,labels)
 
@@ -91,5 +120,5 @@ veto = [5000,5,3.5,5,3,50,3]
 thresholds = [2000,3,2,3,2,20,2]
 cars = ["Alfa_156","Audi_A4","Cit_Xantia","Peugeot_406","Saab_TID","Rnlt_Laguna","VW_Passat","BMW_320d","Cit_Xara","Rnlt_Safrane"]
 attributes = pd.read_csv("data/donnees.csv", header=None).values
-promethee_II(attributes,min_max,weights,cars)
+promethee_I(attributes,min_max,weights,cars)
 
